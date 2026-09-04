@@ -1,0 +1,737 @@
+<title>NFL Predictions Comp</title>
+<style>
+  :root {
+    --bg: #f6f4ee;
+    --surface: #ffffff;
+    --surface-2: #eceae1;
+    --text: #171d18;
+    --text-dim: #5b6459;
+    --accent: #a97a1f;
+    --accent-ink: #ffffff;
+    --accent-2: #2f5b3a;
+    --line: rgba(23, 29, 24, 0.12);
+    --danger: #a3372c;
+    --radius: 10px;
+    --shadow: 0 1px 2px rgba(23, 29, 24, 0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1310;
+      --surface: #161c17;
+      --surface-2: #1e251f;
+      --text: #eef2ea;
+      --text-dim: #a3ad9c;
+      --accent: #d4a537;
+      --accent-ink: #1a1400;
+      --accent-2: #6fae7f;
+      --line: rgba(238, 242, 234, 0.1);
+      --danger: #e2776a;
+      --shadow: none;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1310;
+    --surface: #161c17;
+    --surface-2: #1e251f;
+    --text: #eef2ea;
+    --text-dim: #a3ad9c;
+    --accent: #d4a537;
+    --accent-ink: #1a1400;
+    --accent-2: #6fae7f;
+    --line: rgba(238, 242, 234, 0.1);
+    --danger: #e2776a;
+    --shadow: none;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, .label-face {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    text-wrap: balance;
+  }
+  .mono {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .page { max-width: 720px; margin: 0 auto; padding: 28px 18px 80px; }
+
+  .masthead { margin-bottom: 22px; }
+  .masthead .eyebrow {
+    color: var(--accent-2);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+  .masthead h1 { font-size: 1.7rem; margin: 4px 0 6px; }
+  .masthead p { color: var(--text-dim); margin: 0; font-size: 0.92rem; max-width: 60ch; }
+  .masthead .maxpts {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-top: 12px; padding: 5px 10px;
+    background: var(--surface-2); border-radius: 999px;
+    font-size: 0.78rem; color: var(--text-dim);
+  }
+  .masthead .maxpts b { color: var(--text); font-family: inherit; }
+
+  .tabs {
+    display: flex; gap: 6px; background: var(--surface-2);
+    border-radius: 999px; padding: 4px; margin-bottom: 20px;
+    position: sticky; top: 10px; z-index: 5; box-shadow: var(--shadow);
+  }
+  .tab-btn {
+    flex: 1; border: none; background: transparent; color: var(--text-dim);
+    font-family: "Helvetica Neue", Arial, sans-serif; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.78rem;
+    padding: 10px 8px; border-radius: 999px; cursor: pointer;
+  }
+  .tab-btn[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); }
+  .tab-btn:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 18px; margin-bottom: 16px;
+  }
+
+  .section-label {
+    color: var(--accent-2); font-size: 0.74rem; margin: 0 0 12px;
+    border-top: 2px solid var(--accent-2); padding-top: 8px;
+  }
+
+  .field { margin-bottom: 14px; }
+  .field:last-child { margin-bottom: 0; }
+  .field-row {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 10px; margin-bottom: 6px;
+  }
+  .field label { font-size: 0.9rem; font-weight: 600; }
+  .pts-badge {
+    flex-shrink: 0; font-size: 0.7rem; padding: 2px 7px; border-radius: 999px;
+    background: var(--surface-2); color: var(--text-dim); white-space: nowrap;
+  }
+
+  select, input[type="text"], input[type="number"], textarea {
+    width: 100%; padding: 10px 12px; border-radius: 8px;
+    border: 1px solid var(--line); background: var(--surface-2);
+    color: var(--text); font-size: 0.95rem; font-family: inherit;
+  }
+  select:focus, input:focus, textarea:focus {
+    outline: 2px solid var(--accent-2); outline-offset: 1px;
+  }
+  .field.invalid select, .field.invalid input[type="text"], .field.invalid input[type="number"] {
+    outline: 1px solid var(--danger); border-color: var(--danger);
+  }
+  .other-text { margin-top: 8px; }
+
+  .yn-group { display: flex; gap: 8px; }
+  .yn-group input { position: absolute; opacity: 0; pointer-events: none; }
+  .yn-group label {
+    flex: 1; text-align: center; padding: 10px; border-radius: 8px;
+    border: 1px solid var(--line); background: var(--surface-2);
+    font-weight: 600; cursor: pointer; font-size: 0.9rem;
+  }
+  .yn-group input:checked + label { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+  .name-field input { font-size: 1.05rem; padding: 12px; }
+
+  .actionbar {
+    position: sticky; bottom: 0; padding: 14px 0 4px; margin-top: 6px;
+    background: linear-gradient(to top, var(--bg) 60%, transparent);
+  }
+  button.primary {
+    width: 100%; padding: 14px; border: none; border-radius: 8px;
+    background: var(--accent); color: var(--accent-ink);
+    font-family: "Helvetica Neue", Arial, sans-serif; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.9rem;
+    cursor: pointer;
+  }
+  button.primary:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+  button.secondary {
+    width: 100%; padding: 12px; border-radius: 8px; margin-top: 8px;
+    border: 1px solid var(--line); background: var(--surface-2); color: var(--text);
+    font-weight: 700; font-size: 0.85rem; cursor: pointer;
+  }
+
+  .error-msg { color: var(--danger); font-size: 0.85rem; margin: 10px 0 0; display: none; }
+  .error-msg.show { display: block; }
+
+  .code-out {
+    display: none; margin-top: 16px;
+  }
+  .code-out.show { display: block; }
+  .code-out textarea {
+    resize: none; height: 96px; font-size: 0.82rem; word-break: break-all;
+  }
+  .copy-note { font-size: 0.8rem; color: var(--text-dim); margin: 8px 0 0; }
+  .copy-note.confirm { color: var(--accent-2); font-weight: 700; }
+
+  .decode-row {
+    display: flex; justify-content: space-between; gap: 12px;
+    padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 0.9rem;
+  }
+  .decode-row:last-child { border-bottom: none; }
+  .decode-row .q { color: var(--text-dim); }
+  .decode-row .a { font-weight: 700; text-align: right; }
+
+  .lb-entry { cursor: pointer; }
+  .lb-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .lb-head .lb-who { display: flex; align-items: baseline; gap: 8px; }
+  .lb-rank { color: var(--accent-2); font-family: ui-monospace, monospace; font-weight: 800; }
+  .lb-name { font-size: 1.02rem; font-weight: 700; text-transform: none; letter-spacing: 0; }
+  .lb-score { font-family: ui-monospace, monospace; font-weight: 800; }
+  .lb-tb { color: var(--text-dim); font-size: 0.78rem; margin: 2px 0 0; }
+  .lb-detail { display: none; margin-top: 12px; }
+  .lb-detail.show { display: block; }
+  .lb-detail .decode-row .a.hit { color: var(--accent-2); }
+  .lb-detail .decode-row .a.miss { color: var(--danger); }
+  .lb-unknown { color: var(--text-dim); font-style: italic; }
+
+  footer.hint {
+    color: var(--text-dim); font-size: 0.8rem; text-align: center; margin-top: 24px;
+  }
+</style>
+
+<div class="page">
+  <div class="masthead">
+    <div class="eyebrow">Superbowl LXI Season</div>
+    <h1>NFL Predictions Comp</h1>
+    <p>Fill in your picks, generate your code, and send it back over WhatsApp. Locked once the season kicks off.</p>
+    <div class="maxpts">Max score: <b>38 pts</b> · plus tiebreaker</div>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab-btn" id="tab-pick" role="tab" aria-selected="true">Make Picks</button>
+    <button class="tab-btn" id="tab-results" role="tab" aria-selected="false">Results</button>
+  </div>
+
+  <div class="panel active" id="panel-pick">
+    <div class="card name-field">
+      <div class="field">
+        <div class="field-row"><label for="in-name">Your name</label></div>
+        <input type="text" id="in-name" placeholder="e.g. Paddy" />
+      </div>
+    </div>
+
+    <div id="form-sections"></div>
+
+    <div class="error-msg" id="pick-error">Please answer every question (and fill in "Other" where selected) before generating your code.</div>
+
+    <div class="actionbar">
+      <button class="primary" id="btn-generate">Generate My Code</button>
+    </div>
+
+    <div class="code-out" id="code-out">
+      <div class="card">
+        <div class="section-label label-face">Your Code</div>
+        <textarea id="code-text" class="mono" readonly></textarea>
+        <button class="secondary" id="btn-copy">Copy Code</button>
+        <p class="copy-note" id="copy-note">Tap Copy, then paste it into WhatsApp and send it over.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-results">
+    <div class="card">
+      <div class="section-label label-face">Actual Outcomes</div>
+      <div id="results-actual-fields"></div>
+      <p class="copy-note" id="results-save-note">Fill in what you know — you can leave the rest blank and come back later. Saved automatically in this browser.</p>
+    </div>
+
+    <div class="card">
+      <div class="section-label label-face">Paste Everyone's Codes</div>
+      <div class="field">
+        <textarea id="results-codes-input" style="height:140px" placeholder="Paste each person's code on its own line…"></textarea>
+      </div>
+      <button class="primary" id="btn-leaderboard">Compute Leaderboard</button>
+      <div class="error-msg" id="results-error">Couldn't read one or more codes — check nothing was cut off when copied.</div>
+    </div>
+
+    <div id="results-leaderboard"></div>
+  </div>
+
+  <footer class="hint">Codes are generated on this page only — nothing is sent anywhere until you paste it into WhatsApp yourself.</footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var AFC = {
+    "AFC East": ["Buffalo Bills", "Miami Dolphins", "New England Patriots", "New York Jets"],
+    "AFC North": ["Baltimore Ravens", "Cincinnati Bengals", "Cleveland Browns", "Pittsburgh Steelers"],
+    "AFC South": ["Houston Texans", "Indianapolis Colts", "Jacksonville Jaguars", "Tennessee Titans"],
+    "AFC West": ["Denver Broncos", "Kansas City Chiefs", "Las Vegas Raiders", "Los Angeles Chargers"]
+  };
+  var NFC = {
+    "NFC East": ["Dallas Cowboys", "New York Giants", "Philadelphia Eagles", "Washington Commanders"],
+    "NFC North": ["Chicago Bears", "Detroit Lions", "Green Bay Packers", "Minnesota Vikings"],
+    "NFC South": ["Atlanta Falcons", "Carolina Panthers", "New Orleans Saints", "Tampa Bay Buccaneers"],
+    "NFC West": ["Arizona Cardinals", "Los Angeles Rams", "San Francisco 49ers", "Seattle Seahawks"]
+  };
+  var DIVISIONS = Object.assign({}, AFC, NFC);
+  var AFC_TEAMS = Object.keys(AFC).reduce(function (a, k) { return a.concat(AFC[k]); }, []);
+  var NFC_TEAMS = Object.keys(NFC).reduce(function (a, k) { return a.concat(NFC[k]); }, []);
+
+  var MVP_CANDIDATES = ["Aaron Rodgers", "Baker Mayfield", "Bijan Robinson", "Bo Nix", "Brock Purdy",
+    "Bryce Young", "C.J. Stroud", "Caleb Williams", "Cam Ward", "Christian McCaffrey",
+    "Dak Prescott", "Daniel Jones", "Derrick Henry", "Drake Maye", "Ja'Marr Chase", "Jahmyr Gibbs",
+    "Jalen Hurts", "Jared Goff", "Jaxon Smith-Njigba", "Jaxson Dart", "Jayden Daniels", "Joe Burrow",
+    "Jonathan Taylor", "Jordan Love", "Josh Allen", "Justin Herbert", "Kyler Murray", "Lamar Jackson",
+    "Malik Willis", "Matthew Stafford", "Michael Penix Jr.", "Myles Garrett", "Patrick Mahomes",
+    "Puka Nacua", "Sam Darnold", "Trevor Lawrence", "Tyler Shough"];
+  var QB_CANDIDATES = ["Aaron Rodgers", "Baker Mayfield", "Bo Nix", "Brock Purdy", "Bryce Young",
+    "C.J. Stroud", "Caleb Williams", "Cam Ward", "Dak Prescott", "Daniel Jones", "Deshaun Watson",
+    "Drake Maye", "Jacoby Brissett", "Jalen Hurts", "Jared Goff", "Jaxson Dart", "Jayden Daniels",
+    "Joe Burrow", "Jordan Love", "Josh Allen", "Justin Herbert", "Kyler Murray", "Lamar Jackson",
+    "Malik Willis", "Matthew Stafford", "Patrick Mahomes", "Sam Darnold", "Trevor Lawrence",
+    "Tua Tagovailoa", "Tyler Shough"];
+  var RB_CANDIDATES = ["Ashton Jeanty", "Bhayshul Tuten", "Bijan Robinson", "Blake Corum", "Breece Hall",
+    "Bucky Irving", "Cam Skattebo", "Chase Brown", "Christian McCaffrey", "Chuba Hubbard",
+    "D'Andre Swift", "David Montgomery", "De'Von Achane", "Derrick Henry", "J.K. Dobbins",
+    "Jadarian Price", "Jahmyr Gibbs", "James Cook", "Javonte Williams", "Jeremiyah Love",
+    "Jonathan Taylor", "Jordan Mason", "Kenneth Walker III", "Kyren Williams", "Omarion Hampton",
+    "Quinshon Judkins", "RJ Harvey", "Rachaad White", "Rico Dowdle", "Saquon Barkley",
+    "Tony Pollard", "Travis Etienne Jr.", "TreVeyon Henderson"];
+  var WR_CANDIDATES = ["A.J. Brown", "Alec Pierce", "Amon-Ra St. Brown", "Brock Bowers", "CeeDee Lamb",
+    "Chris Olave", "Christian Watson", "DeVonta Smith", "Drake London", "Emeka Egbuka",
+    "Garrett Wilson", "George Pickens", "Ja'Marr Chase", "Jameson Williams", "Jaxon Smith-Njigba",
+    "Jaylen Waddle", "Justin Jefferson", "Ladd McConkey", "Luther Burden III", "Malik Nabers",
+    "Mike Evans", "Nico Collins", "Parker Washington", "Puka Nacua", "Rashee Rice", "Tee Higgins",
+    "Terry McLaurin", "Tetairoa McMillan", "Trey McBride", "Zay Flowers"];
+
+  function allTeamsGrouped() {
+    return Object.assign({}, AFC, NFC);
+  }
+
+  var QUESTIONS = [
+    { id: "afc_winner", label: "AFC Conference Winner", points: 4, type: "team-list", list: AFC_TEAMS.slice().sort() },
+    { id: "nfc_winner", label: "NFC Conference Winner", points: 4, type: "team-list", list: NFC_TEAMS.slice().sort() },
+    { id: "mvp", label: "MVP", points: 2, type: "player-other", candidates: MVP_CANDIDATES },
+
+    { id: "div_afc_e", label: "AFC East Winner", points: 1, type: "team-list", list: AFC["AFC East"] },
+    { id: "div_afc_n", label: "AFC North Winner", points: 1, type: "team-list", list: AFC["AFC North"] },
+    { id: "div_afc_s", label: "AFC South Winner", points: 1, type: "team-list", list: AFC["AFC South"] },
+    { id: "div_afc_w", label: "AFC West Winner", points: 1, type: "team-list", list: AFC["AFC West"] },
+    { id: "div_nfc_e", label: "NFC East Winner", points: 1, type: "team-list", list: NFC["NFC East"] },
+    { id: "div_nfc_n", label: "NFC North Winner", points: 1, type: "team-list", list: NFC["NFC North"] },
+    { id: "div_nfc_s", label: "NFC South Winner", points: 1, type: "team-list", list: NFC["NFC South"] },
+    { id: "div_nfc_w", label: "NFC West Winner", points: 1, type: "team-list", list: NFC["NFC West"] },
+
+    { id: "most_tds", label: "Team – Most TDs (Reg. Season)", points: 3, type: "team-grouped", groups: allTeamsGrouped() },
+    { id: "fewest_conceded", label: "Team – Fewest Points Conceded (Reg. Season)", points: 2, type: "team-grouped", groups: allTeamsGrouped() },
+    { id: "most_in_game", label: "Team – Most Points in a Single Match (Reg. Season)", points: 3, type: "team-grouped", groups: allTeamsGrouped() },
+    { id: "qb_yards", label: "QB – Most Pass Yards (Reg. Season)", points: 2, type: "player-other", candidates: QB_CANDIDATES },
+    { id: "rb_yards", label: "RB – Most Rush Yards (Reg. Season)", points: 2, type: "player-other", candidates: RB_CANDIDATES },
+    { id: "wr_yards", label: "WR – Most Receiving Yards (Reg. Season)", points: 2, type: "player-other", candidates: WR_CANDIDATES },
+
+    { id: "best_record", label: "Best Reg. Season Record (inc. ties)", points: 1, type: "team-grouped", groups: allTeamsGrouped() },
+    { id: "worst_record", label: "Worst Reg. Season Record (inc. ties)", points: 1, type: "team-grouped", groups: allTeamsGrouped() },
+    { id: "vikings_playoffs", label: "Will the Vikings Make the Playoffs?", points: 1, type: "yn" },
+    { id: "any_14wins", label: "Any Team With 14+ Reg. Season Wins", points: 1, type: "yn" },
+    { id: "garrett_donald_sacks", label: "Myles Garrett + Aaron Donald Combined Sacks — O/U 23.75 (Reg. Season)", points: 1, type: "yn", ynLabels: ["Over", "Under"] },
+    { id: "mike_evans_starts", label: "Mike Evans Reg. Season Starts — O/U 13.5 (Max 17)", points: 1, type: "yn", ynLabels: ["Over", "Under"] }
+  ];
+
+  var TIEBREAKERS = [
+    { id: "tb_browns_points", label: "Cleveland Browns Regular Season Points Scored" }
+  ];
+
+  var CODE_PREFIX = "NFL26.";
+
+  function el(tag, attrs, children) {
+    var e = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) {
+      if (k === "text") e.textContent = attrs[k];
+      else e.setAttribute(k, attrs[k]);
+    });
+    (children || []).forEach(function (c) { e.appendChild(c); });
+    return e;
+  }
+
+  function buildSelectOptions(select, placeholder) {
+    select.appendChild(el("option", { value: "", text: placeholder }));
+  }
+
+  function renderQuestion(q) {
+    var field = el("div", { class: "field", "data-qid": q.id });
+    var row = el("div", { class: "field-row" }, [
+      el("label", { for: "q_" + q.id, text: q.label }),
+      el("span", { class: "pts-badge mono", text: q.points + " pt" + (q.points === 1 ? "" : "s") })
+    ]);
+    field.appendChild(row);
+
+    if (q.type === "team-list") {
+      var sel = el("select", { id: "q_" + q.id });
+      buildSelectOptions(sel, "Select a team…");
+      q.list.forEach(function (t) { sel.appendChild(el("option", { value: t, text: t })); });
+      field.appendChild(sel);
+    } else if (q.type === "team-grouped") {
+      var sel2 = el("select", { id: "q_" + q.id });
+      buildSelectOptions(sel2, "Select a team…");
+      Object.keys(q.groups).forEach(function (g) {
+        var og = el("optgroup", { label: g });
+        q.groups[g].forEach(function (t) { og.appendChild(el("option", { value: t, text: t })); });
+        sel2.appendChild(og);
+      });
+      field.appendChild(sel2);
+    } else if (q.type === "player-other") {
+      var sel3 = el("select", { id: "q_" + q.id });
+      buildSelectOptions(sel3, "Select a player…");
+      q.candidates.forEach(function (p) { sel3.appendChild(el("option", { value: p, text: p })); });
+      sel3.appendChild(el("option", { value: "__other__", text: "Other…" }));
+      field.appendChild(sel3);
+      var otherInput = el("input", { type: "text", id: "q_" + q.id + "_other", class: "other-text", placeholder: "Type the name", style: "display:none" });
+      field.appendChild(otherInput);
+      sel3.addEventListener("change", function () {
+        otherInput.style.display = sel3.value === "__other__" ? "block" : "none";
+      });
+    } else if (q.type === "yn") {
+      var group = el("div", { class: "yn-group" });
+      (q.ynLabels || ["Yes", "No"]).forEach(function (opt) {
+        var id = "q_" + q.id + "_" + opt;
+        var input = el("input", { type: "radio", name: "q_" + q.id, id: id, value: opt });
+        var label = el("label", { for: id, text: opt });
+        group.appendChild(input);
+        group.appendChild(label);
+      });
+      field.appendChild(group);
+    }
+    return field;
+  }
+
+  var sectionsWrap = document.getElementById("form-sections");
+
+  function addSection(labelText, questionIds) {
+    var card = el("div", { class: "card" });
+    card.appendChild(el("div", { class: "section-label label-face", text: labelText }));
+    questionIds.forEach(function (id) {
+      var q = QUESTIONS.filter(function (x) { return x.id === id; })[0];
+      card.appendChild(renderQuestion(q));
+    });
+    sectionsWrap.appendChild(card);
+  }
+
+  addSection("Conference & MVP", ["afc_winner", "nfc_winner", "mvp"]);
+  addSection("Division Winners", ["div_afc_e", "div_afc_n", "div_afc_s", "div_afc_w", "div_nfc_e", "div_nfc_n", "div_nfc_s", "div_nfc_w"]);
+  addSection("Season Stat Leaders", ["most_tds", "fewest_conceded", "most_in_game", "qb_yards", "rb_yards", "wr_yards"]);
+  addSection("Records & Props", ["best_record", "worst_record", "vikings_playoffs", "any_14wins", "garrett_donald_sacks", "mike_evans_starts"]);
+
+  var tbCard = el("div", { class: "card" });
+  tbCard.appendChild(el("div", { class: "section-label label-face", text: TIEBREAKERS.length > 1 ? "Tiebreakers" : "Tiebreaker" }));
+  TIEBREAKERS.forEach(function (tb, i) {
+    var tbField = el("div", { class: "field", "data-qid": tb.id });
+    var prefix = TIEBREAKERS.length > 1 ? (i + 1) + ". " : "";
+    tbField.appendChild(el("div", { class: "field-row" }, [el("label", { for: "q_" + tb.id, text: prefix + tb.label })]));
+    tbField.appendChild(el("input", { type: "number", id: "q_" + tb.id, placeholder: "e.g. 1450", inputmode: "numeric" }));
+    tbCard.appendChild(tbField);
+  });
+  sectionsWrap.appendChild(tbCard);
+
+  function getFieldEl(id) { return document.querySelector('[data-qid="' + id + '"]'); }
+
+  function collectAnswers() {
+    var missing = [];
+    var answers = {};
+    document.querySelectorAll(".field").forEach(function (f) { f.classList.remove("invalid"); });
+
+    var name = document.getElementById("in-name").value.trim();
+    if (!name) missing.push(document.getElementById("in-name").closest(".field"));
+
+    QUESTIONS.forEach(function (q) {
+      var val = null;
+      if (q.type === "yn") {
+        var checked = document.querySelector('input[name="q_' + q.id + '"]:checked');
+        val = checked ? checked.value : null;
+      } else if (q.type === "player-other") {
+        var sel = document.getElementById("q_" + q.id);
+        val = sel.value;
+        if (val === "__other__") {
+          var other = document.getElementById("q_" + q.id + "_other").value.trim();
+          val = other || null;
+        } else if (!val) {
+          val = null;
+        }
+      } else {
+        var s = document.getElementById("q_" + q.id);
+        val = s.value || null;
+      }
+      if (!val) missing.push(getFieldEl(q.id));
+      answers[q.id] = val;
+    });
+
+    var tbValues = TIEBREAKERS.map(function (tb) {
+      var v = document.getElementById("q_" + tb.id).value;
+      if (v === "" || isNaN(Number(v))) missing.push(getFieldEl(tb.id));
+      return Number(v);
+    });
+
+    if (missing.length) {
+      missing.forEach(function (f) { if (f) f.classList.add("invalid"); });
+      return null;
+    }
+
+    return { n: name, a: QUESTIONS.map(function (q) { return answers[q.id]; }), t: tbValues };
+  }
+
+  function b64encode(str) { return btoa(unescape(encodeURIComponent(str))); }
+  function b64decode(str) { return decodeURIComponent(escape(atob(str))); }
+
+  document.getElementById("btn-generate").addEventListener("click", function () {
+    var payload = collectAnswers();
+    var errorEl = document.getElementById("pick-error");
+    if (!payload) {
+      errorEl.classList.add("show");
+      var firstInvalid = document.querySelector(".field.invalid");
+      if (firstInvalid) firstInvalid.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    errorEl.classList.remove("show");
+    var code = CODE_PREFIX + b64encode(JSON.stringify(payload));
+    document.getElementById("code-text").value = code;
+    document.getElementById("code-out").classList.add("show");
+    document.getElementById("copy-note").classList.remove("confirm");
+    document.getElementById("copy-note").textContent = "Tap Copy, then paste it into WhatsApp and send it over.";
+    document.getElementById("code-out").scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+
+  document.getElementById("btn-copy").addEventListener("click", function () {
+    var textarea = document.getElementById("code-text");
+    var note = document.getElementById("copy-note");
+    function confirmCopied() {
+      note.textContent = "Copied! Paste it into WhatsApp now.";
+      note.classList.add("confirm");
+    }
+    function manualFallback() {
+      textarea.focus();
+      textarea.select();
+      note.textContent = "Couldn't auto-copy — the code is selected, use your device's copy action.";
+      note.classList.remove("confirm");
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(textarea.value).then(confirmCopied, function () {
+        try {
+          textarea.focus(); textarea.select();
+          if (document.execCommand("copy")) confirmCopied(); else manualFallback();
+        } catch (e) { manualFallback(); }
+      });
+    } else {
+      try {
+        textarea.focus(); textarea.select();
+        if (document.execCommand("copy")) confirmCopied(); else manualFallback();
+      } catch (e) { manualFallback(); }
+    }
+  });
+
+  function decodeCode(raw) {
+    var code = raw.trim();
+    if (code.indexOf(CODE_PREFIX) === 0) code = code.slice(CODE_PREFIX.length);
+    var payload = JSON.parse(b64decode(code));
+    if (!payload || !Array.isArray(payload.a) || payload.a.length !== QUESTIONS.length ||
+        !Array.isArray(payload.t) || payload.t.length !== TIEBREAKERS.length) {
+      throw new Error("shape mismatch");
+    }
+    return payload;
+  }
+
+  function switchTab(which) {
+    var tabs = { pick: "panel-pick", results: "panel-results" };
+    Object.keys(tabs).forEach(function (key) {
+      document.getElementById("tab-" + key).setAttribute("aria-selected", key === which ? "true" : "false");
+      document.getElementById(tabs[key]).classList.toggle("active", key === which);
+    });
+  }
+  document.getElementById("tab-pick").addEventListener("click", function () { switchTab("pick"); });
+  document.getElementById("tab-results").addEventListener("click", function () { switchTab("results"); });
+
+  // ---- Results / scoring ----
+
+  function renderActualQuestion(q) {
+    var field = el("div", { class: "field", "data-aqid": q.id });
+    field.appendChild(el("div", { class: "field-row" }, [el("label", { for: "actual_" + q.id, text: q.label })]));
+
+    if (q.type === "team-list") {
+      var sel = el("select", { id: "actual_" + q.id });
+      buildSelectOptions(sel, "Not yet decided…");
+      q.list.forEach(function (t) { sel.appendChild(el("option", { value: t, text: t })); });
+      field.appendChild(sel);
+    } else if (q.type === "team-grouped") {
+      var sel2 = el("select", { id: "actual_" + q.id });
+      buildSelectOptions(sel2, "Not yet decided…");
+      Object.keys(q.groups).forEach(function (g) {
+        var og = el("optgroup", { label: g });
+        q.groups[g].forEach(function (t) { og.appendChild(el("option", { value: t, text: t })); });
+        sel2.appendChild(og);
+      });
+      field.appendChild(sel2);
+    } else if (q.type === "player-other") {
+      var sel3 = el("select", { id: "actual_" + q.id });
+      buildSelectOptions(sel3, "Not yet decided…");
+      q.candidates.forEach(function (p) { sel3.appendChild(el("option", { value: p, text: p })); });
+      sel3.appendChild(el("option", { value: "__other__", text: "Other…" }));
+      field.appendChild(sel3);
+      var otherInput = el("input", { type: "text", id: "actual_" + q.id + "_other", class: "other-text", placeholder: "Type the name", style: "display:none" });
+      field.appendChild(otherInput);
+      sel3.addEventListener("change", function () {
+        otherInput.style.display = sel3.value === "__other__" ? "block" : "none";
+      });
+    } else if (q.type === "yn") {
+      var sel4 = el("select", { id: "actual_" + q.id });
+      buildSelectOptions(sel4, "Not yet decided…");
+      (q.ynLabels || ["Yes", "No"]).forEach(function (opt) { sel4.appendChild(el("option", { value: opt, text: opt })); });
+      field.appendChild(sel4);
+    }
+    return field;
+  }
+
+  var actualWrap = document.getElementById("results-actual-fields");
+  QUESTIONS.forEach(function (q) { actualWrap.appendChild(renderActualQuestion(q)); });
+  var actualTbField = el("div", { class: "field", "data-aqid": "__tb__" });
+  actualTbField.appendChild(el("div", { class: "field-row" }, [el("label", { for: "actual___tb__", text: TIEBREAKERS[0].label + " (Actual)" })]));
+  actualTbField.appendChild(el("input", { type: "number", id: "actual___tb__", placeholder: "e.g. 1450", inputmode: "numeric" }));
+  actualWrap.appendChild(actualTbField);
+
+  var ACTUAL_STORAGE_KEY = "nfl26_actual_outcomes";
+
+  function collectActualAnswers() {
+    var out = { a: {}, tb: null };
+    QUESTIONS.forEach(function (q) {
+      var val = null;
+      if (q.type === "player-other") {
+        var sel = document.getElementById("actual_" + q.id);
+        val = sel.value;
+        if (val === "__other__") {
+          var other = document.getElementById("actual_" + q.id + "_other").value.trim();
+          val = other || null;
+        } else if (!val) { val = null; }
+      } else {
+        var s = document.getElementById("actual_" + q.id);
+        val = s.value || null;
+      }
+      out.a[q.id] = val;
+    });
+    var tbVal = document.getElementById("actual___tb__").value;
+    out.tb = (tbVal === "" || isNaN(Number(tbVal))) ? null : Number(tbVal);
+    return out;
+  }
+
+  function applyActualAnswers(saved) {
+    if (!saved) return;
+    QUESTIONS.forEach(function (q) {
+      var val = saved.a ? saved.a[q.id] : null;
+      if (val == null) return;
+      if (q.type === "player-other") {
+        var sel = document.getElementById("actual_" + q.id);
+        var isKnown = q.candidates.indexOf(val) !== -1;
+        sel.value = isKnown ? val : "__other__";
+        if (!isKnown) {
+          var other = document.getElementById("actual_" + q.id + "_other");
+          other.value = val;
+          other.style.display = "block";
+        }
+      } else {
+        document.getElementById("actual_" + q.id).value = val;
+      }
+    });
+    if (saved.tb != null) document.getElementById("actual___tb__").value = saved.tb;
+  }
+
+  function saveActualAnswers() {
+    try { localStorage.setItem(ACTUAL_STORAGE_KEY, JSON.stringify(collectActualAnswers())); } catch (e) {}
+  }
+
+  (function loadActualAnswers() {
+    try {
+      var raw = localStorage.getItem(ACTUAL_STORAGE_KEY);
+      if (raw) applyActualAnswers(JSON.parse(raw));
+    } catch (e) {}
+  })();
+
+  actualWrap.addEventListener("change", saveActualAnswers);
+  actualWrap.addEventListener("input", saveActualAnswers);
+
+  function norm(s) { return (s || "").toString().trim().toLowerCase(); }
+
+  document.getElementById("btn-leaderboard").addEventListener("click", function () {
+    var raw = document.getElementById("results-codes-input").value;
+    var errorEl = document.getElementById("results-error");
+    var boardEl = document.getElementById("results-leaderboard");
+    boardEl.innerHTML = "";
+
+    var lines = raw.split("\n").map(function (l) { return l.trim(); }).filter(Boolean);
+    var entries = [];
+    var failCount = 0;
+    lines.forEach(function (line) {
+      try { entries.push(decodeCode(line)); } catch (e) { failCount++; }
+    });
+    errorEl.classList.toggle("show", failCount > 0);
+    if (!entries.length) return;
+
+    var actual = collectActualAnswers();
+    var maxPoints = QUESTIONS.reduce(function (s, q) { return s + q.points; }, 0);
+
+    var scored = entries.map(function (payload) {
+      var score = 0;
+      var breakdown = QUESTIONS.map(function (q, i) {
+        var actualVal = actual.a[q.id];
+        var theirVal = payload.a[i];
+        var known = actualVal != null;
+        var hit = known && norm(actualVal) === norm(theirVal);
+        if (hit) score += q.points;
+        return { q: q, theirVal: theirVal, actualVal: actualVal, known: known, hit: hit };
+      });
+      var tbDiff = (actual.tb != null) ? Math.abs(payload.t[0] - actual.tb) : null;
+      return { name: payload.n, score: score, tbDiff: tbDiff, breakdown: breakdown, tbGuess: payload.t[0] };
+    });
+
+    scored.sort(function (a, b) {
+      if (b.score !== a.score) return b.score - a.score;
+      if (a.tbDiff == null && b.tbDiff == null) return 0;
+      if (a.tbDiff == null) return 1;
+      if (b.tbDiff == null) return -1;
+      return a.tbDiff - b.tbDiff;
+    });
+
+    scored.forEach(function (entry, idx) {
+      var card = el("div", { class: "card lb-entry" });
+      var head = el("div", { class: "lb-head" }, [
+        el("div", { class: "lb-who" }, [
+          el("span", { class: "lb-rank mono", text: "#" + (idx + 1) }),
+          el("span", { class: "lb-name", text: entry.name })
+        ]),
+        el("span", { class: "lb-score mono", text: entry.score + " / " + maxPoints })
+      ]);
+      card.appendChild(head);
+      var tbText = TIEBREAKERS[0].label + " guess: " + entry.tbGuess +
+        (entry.tbDiff != null ? ("  ·  off by " + entry.tbDiff) : "  ·  actual not set yet");
+      card.appendChild(el("p", { class: "lb-tb", text: tbText }));
+
+      var detail = el("div", { class: "lb-detail" });
+      entry.breakdown.forEach(function (b) {
+        var actualText = b.known ? b.actualVal : "TBD";
+        var aClass = b.known ? ("a " + (b.hit ? "hit" : "miss")) : "a lb-unknown";
+        detail.appendChild(el("div", { class: "decode-row" }, [
+          el("span", { class: "q", text: b.q.label }),
+          el("span", { class: aClass, text: (b.theirVal || "—") + "  vs  " + actualText })
+        ]));
+      });
+      card.appendChild(detail);
+      head.addEventListener("click", function () { detail.classList.toggle("show"); });
+      boardEl.appendChild(card);
+    });
+  });
+})();
+</script>
