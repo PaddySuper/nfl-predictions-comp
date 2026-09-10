@@ -1,6 +1,8 @@
 {
-  "updated": "",
-  "codes": [],
+  "updated": "2026-09-10",
+  "codes": [
+    "NFL26.eyJuIjoiR1MiLCJhIjpbIkJ1ZmZhbG8gQmlsbHMiLCJEZXRyb2l0IExpb25zIiwiSm9zaCBBbGxlbiIsIkJ1ZmZhbG8gQmlsbHMiLCJDaW5jaW5uYXRpIEJlbmdhbHMiLCJIb3VzdG9uIFRleGFucyIsIkRlbnZlciBCcm9uY29zIiwiRGFsbGFzIENvd2JveXMiLCJEZXRyb2l0IExpb25zIiwiVGFtcGEgQmF5IEJ1Y2NhbmVlcnMiLCJMb3MgQW5nZWxlcyBSYW1zIiwiQ2luY2lubmF0aSBCZW5nYWxzIiwiSG91c3RvbiBUZXhhbnMiLCJCdWZmYWxvIEJpbGxzIiwiRGFrIFByZXNjb3R0IiwiQmlqYW4gUm9iaW5zb24iLCJKYSdNYXJyIENoYXNlIiwiQnVmZmFsbyBCaWxscyIsIk5ldyBZb3JrIEpldHMiLCJObyIsIk5vIiwiVW5kZXIiLCJPdmVyIl0sInQiOlsxNTBdfQ=="
+  ],
   "actual": {
     "a": {},
     "tb": null
