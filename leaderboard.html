@@ -1,0 +1,304 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>NFL Predictions Comp — Leaderboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root {
+    --bg: #f6f4ee;
+    --surface: #ffffff;
+    --surface-2: #eceae1;
+    --text: #171d18;
+    --text-dim: #5b6459;
+    --accent: #a97a1f;
+    --accent-ink: #ffffff;
+    --accent-2: #2f5b3a;
+    --line: rgba(23, 29, 24, 0.12);
+    --danger: #a3372c;
+    --radius: 10px;
+    --shadow: 0 1px 2px rgba(23, 29, 24, 0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1310; --surface: #161c17; --surface-2: #1e251f;
+      --text: #eef2ea; --text-dim: #a3ad9c; --accent: #d4a537;
+      --accent-ink: #1a1400; --accent-2: #6fae7f;
+      --line: rgba(238, 242, 234, 0.1); --danger: #e2776a; --shadow: none;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1310; --surface: #161c17; --surface-2: #1e251f;
+    --text: #eef2ea; --text-dim: #a3ad9c; --accent: #d4a537;
+    --accent-ink: #1a1400; --accent-2: #6fae7f;
+    --line: rgba(238, 242, 234, 0.1); --danger: #e2776a; --shadow: none;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.45; -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, .label-face {
+    font-family: "Helvetica Neue", Arial, sans-serif; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 0.04em; text-wrap: balance;
+  }
+  .mono { font-family: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace; font-variant-numeric: tabular-nums; }
+  .page { max-width: 720px; margin: 0 auto; padding: 28px 18px 80px; }
+  .masthead { margin-bottom: 22px; }
+  .masthead .eyebrow { color: var(--accent-2); font-size: 0.72rem; letter-spacing: 0.14em; font-weight: 800; text-transform: uppercase; }
+  .masthead h1 { font-size: 1.7rem; margin: 4px 0 6px; }
+  .masthead p { color: var(--text-dim); margin: 0; font-size: 0.92rem; max-width: 60ch; }
+  .masthead .maxpts {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 5px 10px;
+    background: var(--surface-2); border-radius: 999px; font-size: 0.78rem; color: var(--text-dim);
+  }
+  .masthead .maxpts b { color: var(--text); font-family: inherit; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; margin-bottom: 16px; }
+  .section-label { color: var(--accent-2); font-size: 0.74rem; margin: 0 0 12px; border-top: 2px solid var(--accent-2); padding-top: 8px; }
+  .updated-note { color: var(--text-dim); font-size: 0.8rem; margin: 0 0 20px; }
+  .empty-state { color: var(--text-dim); font-size: 0.9rem; text-align: center; padding: 24px 12px; }
+  .actual-grid { display: block; }
+  .actual-row { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 0.87rem; }
+  .actual-row:last-child { border-bottom: none; }
+  .actual-row .q { color: var(--text-dim); }
+  .actual-row .a { font-weight: 700; text-align: right; }
+  .actual-row .a.tbd { color: var(--text-dim); font-weight: 500; font-style: italic; }
+  .decode-row { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
+  .decode-row:last-child { border-bottom: none; }
+  .decode-row .q { color: var(--text-dim); }
+  .decode-row .a { font-weight: 700; text-align: right; }
+  .lb-entry { cursor: pointer; }
+  .lb-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .lb-head .lb-who { display: flex; align-items: baseline; gap: 8px; }
+  .lb-rank { color: var(--accent-2); font-family: ui-monospace, monospace; font-weight: 800; }
+  .lb-name { font-size: 1.02rem; font-weight: 700; text-transform: none; letter-spacing: 0; }
+  .lb-score { font-family: ui-monospace, monospace; font-weight: 800; }
+  .lb-tb { color: var(--text-dim); font-size: 0.78rem; margin: 2px 0 0; }
+  .lb-detail { display: none; margin-top: 12px; }
+  .lb-detail.show { display: block; }
+  .lb-detail .decode-row .a.hit { color: var(--accent-2); }
+  .lb-detail .decode-row .a.miss { color: var(--danger); }
+  .lb-unknown { color: var(--text-dim); font-style: italic; }
+  .error-card { border-left: 3px solid var(--danger); }
+  footer.hint { color: var(--text-dim); font-size: 0.8rem; text-align: center; margin-top: 24px; }
+  footer.hint a { color: var(--accent-2); }
+</style>
+
+<div class="page">
+  <div class="masthead">
+    <div class="eyebrow">Superbowl LXI Season</div>
+    <h1>NFL Predictions Comp — Leaderboard</h1>
+    <p>Live standings for everyone who entered. This page is read-only — picks are managed by whoever's running the pool.</p>
+    <div class="maxpts">Max score: <b>38 pts</b> · plus tiebreaker</div>
+  </div>
+
+  <div class="card" id="actual-card">
+    <div class="section-label label-face">Actual Outcomes So Far</div>
+    <div class="actual-grid" id="actual-grid"></div>
+  </div>
+
+  <div id="leaderboard-wrap">
+    <div class="section-label label-face">Standings</div>
+    <div id="leaderboard"></div>
+  </div>
+
+  <p class="updated-note" id="updated-note"></p>
+
+  <footer class="hint">Tap an entry to see their full picks vs. the actual outcomes.</footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var AFC = {
+    "AFC East": ["Buffalo Bills", "Miami Dolphins", "New England Patriots", "New York Jets"],
+    "AFC North": ["Baltimore Ravens", "Cincinnati Bengals", "Cleveland Browns", "Pittsburgh Steelers"],
+    "AFC South": ["Houston Texans", "Indianapolis Colts", "Jacksonville Jaguars", "Tennessee Titans"],
+    "AFC West": ["Denver Broncos", "Kansas City Chiefs", "Las Vegas Raiders", "Los Angeles Chargers"]
+  };
+  var NFC = {
+    "NFC East": ["Dallas Cowboys", "New York Giants", "Philadelphia Eagles", "Washington Commanders"],
+    "NFC North": ["Chicago Bears", "Detroit Lions", "Green Bay Packers", "Minnesota Vikings"],
+    "NFC South": ["Atlanta Falcons", "Carolina Panthers", "New Orleans Saints", "Tampa Bay Buccaneers"],
+    "NFC West": ["Arizona Cardinals", "Los Angeles Rams", "San Francisco 49ers", "Seattle Seahawks"]
+  };
+
+  var QUESTIONS = [
+    { id: "afc_winner", label: "AFC Conference Winner", points: 4 },
+    { id: "nfc_winner", label: "NFC Conference Winner", points: 4 },
+    { id: "mvp", label: "MVP", points: 2 },
+    { id: "div_afc_e", label: "AFC East Winner", points: 1 },
+    { id: "div_afc_n", label: "AFC North Winner", points: 1 },
+    { id: "div_afc_s", label: "AFC South Winner", points: 1 },
+    { id: "div_afc_w", label: "AFC West Winner", points: 1 },
+    { id: "div_nfc_e", label: "NFC East Winner", points: 1 },
+    { id: "div_nfc_n", label: "NFC North Winner", points: 1 },
+    { id: "div_nfc_s", label: "NFC South Winner", points: 1 },
+    { id: "div_nfc_w", label: "NFC West Winner", points: 1 },
+    { id: "most_tds", label: "Team – Most TDs (Reg. Season)", points: 3 },
+    { id: "fewest_conceded", label: "Team – Fewest Points Conceded (Reg. Season)", points: 2 },
+    { id: "most_in_game", label: "Team – Most Points in a Single Match (Reg. Season)", points: 3 },
+    { id: "qb_yards", label: "QB – Most Pass Yards (Reg. Season)", points: 2 },
+    { id: "rb_yards", label: "RB – Most Rush Yards (Reg. Season)", points: 2 },
+    { id: "wr_yards", label: "WR – Most Receiving Yards (Reg. Season)", points: 2 },
+    { id: "best_record", label: "Best Reg. Season Record (inc. ties)", points: 1 },
+    { id: "worst_record", label: "Worst Reg. Season Record (inc. ties)", points: 1 },
+    { id: "vikings_playoffs", label: "Will the Vikings Make the Playoffs?", points: 1 },
+    { id: "any_14wins", label: "Any Team With 14+ Reg. Season Wins", points: 1 },
+    { id: "garrett_donald_sacks", label: "Myles Garrett + Aaron Donald Combined Sacks — O/U 23.75 (Reg. Season)", points: 1 },
+    { id: "mike_evans_starts", label: "Mike Evans Reg. Season Starts — O/U 13.5 (Max 17)", points: 1 }
+  ];
+
+  var TIEBREAKERS = [
+    { id: "tb_browns_points", label: "Cleveland Browns Regular Season Points Scored" }
+  ];
+
+  var CODE_PREFIX = "NFL26.";
+
+  function el(tag, attrs, children) {
+    var e = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) {
+      if (k === "text") e.textContent = attrs[k];
+      else e.setAttribute(k, attrs[k]);
+    });
+    (children || []).forEach(function (c) { e.appendChild(c); });
+    return e;
+  }
+
+  function b64decode(str) { return decodeURIComponent(escape(atob(str))); }
+
+  function decodeCode(raw) {
+    var code = raw.trim();
+    if (code.indexOf(CODE_PREFIX) === 0) code = code.slice(CODE_PREFIX.length);
+    var payload = JSON.parse(b64decode(code));
+    if (!payload || !Array.isArray(payload.a) || payload.a.length !== QUESTIONS.length ||
+        !Array.isArray(payload.t) || payload.t.length !== TIEBREAKERS.length) {
+      throw new Error("shape mismatch");
+    }
+    return payload;
+  }
+
+  function norm(s) { return (s || "").toString().trim().toLowerCase(); }
+
+  function renderActual(actual) {
+    var grid = document.getElementById("actual-grid");
+    grid.innerHTML = "";
+    var any = false;
+    QUESTIONS.forEach(function (q) {
+      var val = actual.a ? actual.a[q.id] : null;
+      if (val == null) return;
+      any = true;
+      grid.appendChild(el("div", { class: "actual-row" }, [
+        el("span", { class: "q", text: q.label }),
+        el("span", { class: "a", text: val })
+      ]));
+    });
+    if (actual.tb != null) {
+      any = true;
+      grid.appendChild(el("div", { class: "actual-row" }, [
+        el("span", { class: "q", text: TIEBREAKERS[0].label }),
+        el("span", { class: "a", text: actual.tb })
+      ]));
+    }
+    if (!any) {
+      grid.appendChild(el("div", { class: "actual-row" }, [
+        el("span", { class: "a tbd", text: "Nothing confirmed yet — check back once results start coming in." })
+      ]));
+    }
+  }
+
+  function renderLeaderboard(entries, actual) {
+    var boardEl = document.getElementById("leaderboard");
+    boardEl.innerHTML = "";
+
+    if (!entries.length) {
+      boardEl.appendChild(el("div", { class: "card empty-state", text: "No entries yet." }));
+      return;
+    }
+
+    var maxPoints = QUESTIONS.reduce(function (s, q) { return s + q.points; }, 0);
+
+    var scored = entries.map(function (payload) {
+      var score = 0;
+      var breakdown = QUESTIONS.map(function (q, i) {
+        var actualVal = actual.a ? actual.a[q.id] : null;
+        var theirVal = payload.a[i];
+        var known = actualVal != null;
+        var hit = known && norm(actualVal) === norm(theirVal);
+        if (hit) score += q.points;
+        return { q: q, theirVal: theirVal, actualVal: actualVal, known: known, hit: hit };
+      });
+      var tbDiff = (actual.tb != null) ? Math.abs(payload.t[0] - actual.tb) : null;
+      return { name: payload.n, score: score, tbDiff: tbDiff, breakdown: breakdown, tbGuess: payload.t[0] };
+    });
+
+    scored.sort(function (a, b) {
+      if (b.score !== a.score) return b.score - a.score;
+      if (a.tbDiff == null && b.tbDiff == null) return 0;
+      if (a.tbDiff == null) return 1;
+      if (b.tbDiff == null) return -1;
+      return a.tbDiff - b.tbDiff;
+    });
+
+    scored.forEach(function (entry, idx) {
+      var card = el("div", { class: "card lb-entry" });
+      var head = el("div", { class: "lb-head" }, [
+        el("div", { class: "lb-who" }, [
+          el("span", { class: "lb-rank mono", text: "#" + (idx + 1) }),
+          el("span", { class: "lb-name", text: entry.name })
+        ]),
+        el("span", { class: "lb-score mono", text: entry.score + " / " + maxPoints })
+      ]);
+      card.appendChild(head);
+      var tbText = TIEBREAKERS[0].label + " guess: " + entry.tbGuess +
+        (entry.tbDiff != null ? ("  ·  off by " + entry.tbDiff) : "  ·  actual not set yet");
+      card.appendChild(el("p", { class: "lb-tb", text: tbText }));
+
+      var detail = el("div", { class: "lb-detail" });
+      entry.breakdown.forEach(function (b) {
+        var actualText = b.known ? b.actualVal : "TBD";
+        var aClass = b.known ? ("a " + (b.hit ? "hit" : "miss")) : "a lb-unknown";
+        detail.appendChild(el("div", { class: "decode-row" }, [
+          el("span", { class: "q", text: b.q.label }),
+          el("span", { class: aClass, text: (b.theirVal || "—") + "  vs  " + actualText })
+        ]));
+      });
+      card.appendChild(detail);
+      head.addEventListener("click", function () { detail.classList.toggle("show"); });
+      boardEl.appendChild(card);
+    });
+  }
+
+  function renderError(message) {
+    document.getElementById("actual-card").style.display = "none";
+    var wrap = document.getElementById("leaderboard-wrap");
+    wrap.innerHTML = "";
+    wrap.appendChild(el("div", { class: "card error-card", text: message }));
+  }
+
+  fetch("./data.json", { cache: "no-store" })
+    .then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    })
+    .then(function (data) {
+      var codes = Array.isArray(data.codes) ? data.codes : [];
+      var actual = data.actual || {};
+      var entries = [];
+      var failCount = 0;
+      codes.forEach(function (line) {
+        try { entries.push(decodeCode(line)); } catch (e) { failCount++; }
+      });
+      renderActual(actual);
+      renderLeaderboard(entries, actual);
+      var note = "";
+      if (data.updated) note += "Last updated " + data.updated + ". ";
+      if (failCount) note += failCount + " code(s) couldn't be read and were skipped.";
+      document.getElementById("updated-note").textContent = note;
+    })
+    .catch(function (e) {
+      renderError("Couldn't load the leaderboard data (" + e.message + "). Try refreshing in a moment.");
+    });
+})();
+</script>
