@@ -665,7 +665,16 @@
 
   function norm(s) { return (s || "").toString().trim().toLowerCase(); }
 
-  document.getElementById("btn-leaderboard").addEventListener("click", function () {
+  var CODES_STORAGE_KEY = "nfl26_codes_input";
+  var codesInputEl = document.getElementById("results-codes-input");
+
+  function saveCodesInput() {
+    try { localStorage.setItem(CODES_STORAGE_KEY, codesInputEl.value); } catch (e) {}
+  }
+  codesInputEl.addEventListener("input", saveCodesInput);
+  codesInputEl.addEventListener("change", saveCodesInput);
+
+  function computeLeaderboard() {
     var raw = document.getElementById("results-codes-input").value;
     var errorEl = document.getElementById("results-error");
     var boardEl = document.getElementById("results-leaderboard");
@@ -732,6 +741,18 @@
       head.addEventListener("click", function () { detail.classList.toggle("show"); });
       boardEl.appendChild(card);
     });
-  });
+  }
+
+  document.getElementById("btn-leaderboard").addEventListener("click", computeLeaderboard);
+
+  (function loadCodesInput() {
+    try {
+      var raw = localStorage.getItem(CODES_STORAGE_KEY);
+      if (raw) {
+        codesInputEl.value = raw;
+        computeLeaderboard();
+      }
+    } catch (e) {}
+  })();
 })();
 </script>
